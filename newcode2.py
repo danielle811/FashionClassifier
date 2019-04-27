@@ -184,6 +184,8 @@ images *= intensity
 # Record spikes during the simulation.
 spike_record = torch.zeros(n_test, time, n_neurons)
 
+data_loader = poisson_loader(data=images, time=time, dt=dt)
+
 for i in range(n_test):
     if i % progress_interval == 0:
         print('Progress: %d / %d (%.4f seconds)' % (i, n_test, t() - start))
