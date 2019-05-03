@@ -1,0 +1,29 @@
+[--n_neurons N_NEURONS] Number of neurons used in excitory/inhibitory layer *1
+[--n_train N_TRAIN] Number of sample data
+[--n_test N_TEST] Number of test data
+[--update interval UPDATE_INTERVAL] Update temporary labels for excitory neurons after given interval data.
+[--gpu] use gpu (default set to false)
+
+
+
+
+*1  As written on paper, the 28x28 image is encoded into spikes and sent to all excitory neurons, those are connected to same number
+of inhibitory neurons.
+
+Example: python .\newcode2.py --n_train 330 --n_test 100 --gpu --update_interval 20 --n_neuron 6400
+
+All activity accuracy:
+0.3
+Proportion weighting accuracy:
+0.31
+
+
+This is unsupervised learning. The labels are assigned after training is done. 
+
+All activity accuracy:
+This method is to assign label to neuron that generate most spikes for.
+In test phase, the lable with highest appearance among the firing neurons is chosen. 
+
+Proportion weighting accuracy:
+This method is to give neuron proportions of spike activity per class.
+In test phase, the proportions of labels among the firing neurons is added. The label with highest sum is chosen. 
