@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Github  : https://github.com/danielle811/FashionClassifier
 
+import pickle
+import time
 import gzip
 import zipfile
 import sys
@@ -128,19 +130,25 @@ class Tools:
 	# Generate currents for teaching neurons
 	def getTeachCurr(self, label):
 		# print('in getTeachCurr')
-		if label[0] == 1:
+		if label[target_categories[0]] == 1:
 			return [8,0,0,0] * nA
-		elif label[2] == 1:
+		elif label[target_categories[1]] == 1:
 			return [0,8,0,0] * nA
-		elif label[7] == 1:
+		elif label[target_categories[2]] == 1:
 			return [0,0,8,0] * nA
-		elif label[8] == 1:
+		elif label[target_categories[3]] == 1:
 			return [0,0,0,8] * nA
 		else:
 			print('wrong label')
 			return [0,0,0,0] * nA
 
 if __name__ == '__main__':
+	start_time = time.time()
+	# set train to False to use the pre-trained weights
+	train = True
+
+	target_categories = [1,2,7,8]
+
 	tools = Tools()
 	train_data = Data('train')
 	test_data = Data('test')
@@ -191,51 +199,66 @@ if __name__ == '__main__':
 
 	print('start training')
 	weight=numpy.zeros((4,784))
-	#1: Trousers 2: Pullover 7: Sneaker 8: Bag
-	for epoch in range(1000):
-		if epoch%10==0:
-			print('complete:' + str(epoch) + '/1000')
-			
-		# Ignore the data that are not 1,2,7 or 8
-		if tools.filterData(train_data.data[1][epoch], [0,2,7,8])==False:
-			continue
-			
-		# Restore to the previous checkpoint (reset the time of monitors)
-		restore()
-		
-		input_layer.v = El
-		
-		# Feed the input layer with image current, output layer with teaching currents 
-		input_layer.I = tools.imageToCurr(train_data.data[0][epoch])
-		output_layer.I = tools.getTeachCurr(train_data.data[1][epoch])
-		
-		run(duration)	
-		
-		# spike_trains() is a dictionary that has neuron index as key and its 
-		# corresponding time of spikes as value
-		spike_dict = spikeMons.spike_trains()
-		output_spike_dict = output_spikeMons.spike_trains()
 
-		# convert the dictionaries to arrays of 0 and 1
-		in_trains = tools.dictToSpikeTrains(spike_dict)
-		out_trains = tools.dictToSpikeTrains(output_spike_dict)
-		
-		# update the weights with STDP
-		for k in range(num_output_neurons):
-			for i in range(len(weight[k])):
-				weight[k][i] = stdp.updateSTDP(out_trains[k], in_trains[i], weight[k][i])
+	if train:
+		#1: Trousers 2: Pullover 7: Sneaker 8: Bag
+		for epoch in range(1000):
+			if epoch%10==0:
+				print('complete:' + str(epoch) + '/1000')
 				
+			# Ignore the data that are not 1,2,7 or 8
+			if tools.filterData(train_data.data[1][epoch], target_categories)==False:
+				continue
+				
+			# Restore to the previous checkpoint (reset the time of monitors)
+			restore()
+			
+			input_layer.v = El
+			
+			# Feed the input layer with image current, output layer with teaching currents 
+			input_layer.I = tools.imageToCurr(train_data.data[0][epoch])
+			output_layer.I = tools.getTeachCurr(train_data.data[1][epoch])
+			
+			run(duration)	
+			
+			# spike_trains() is a dictionary that has neuron index as key and its 
+			# corresponding time of spikes as value
+			spike_dict = spikeMons.spike_trains()
+			output_spike_dict = output_spikeMons.spike_trains()
+
+			# convert the dictionaries to arrays of 0 and 1
+			in_trains = tools.dictToSpikeTrains(spike_dict)
+			out_trains = tools.dictToSpikeTrains(output_spike_dict)
+			
+			# update the weights with STDP
+			for k in range(num_output_neurons):
+				for i in range(len(weight[k])):
+					weight[k][i] = stdp.updateSTDP(out_trains[k], in_trains[i], weight[k][i])
+
+		# Save the newly updated weights to weights.txt
+		with open('weights.txt','wb') as f:
+			pickle.dump(weight, f)
+	else:
+		# load the pre-trained weights 
+		with open('weights.txt','rb') as f:
+			weight = pickle.load(f)
+
+
 	print('done training')
+
+	elapsed_time = time.time() - start_time
+	print('Time Used for Training: ', time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
 	print('start testing')
 	count, correct = 0,0
 	for i in range(1000):
 		if i%50==0:
 			print('complete:', i, '/1000')
-		if tools.filterData(test_data.data[1][i], [0,2,7,8])==False:
+		if tools.filterData(test_data.data[1][i], target_categories)==False:
 			continue
 		cur = tools.imageToCurr(test_data.data[0][i])
 
+		# add up all the currents with respect to the weights
 		sum=[0,0,0,0]
 		x = -1
 		for k in range(784):
@@ -243,25 +266,29 @@ if __name__ == '__main__':
 			sum[1]+=weight[1][k]*cur[k]
 			sum[2]+=weight[2][k]*cur[k]
 			sum[3]+=weight[3][k]*cur[k]
+
+		# See which one has the strongest current 
 		if sum[0]==max(sum):
-			x = 0
+			pred = target_categories[0]
 		elif sum[1]==max(sum):
-			x = 2
+			pred = target_categories[1]
 		elif sum[2]==max(sum):
-			x = 7
+			pred = target_categories[2]
 		else:
-			x = 8
+			pred = target_categories[3]
+		
 		index = -1
 		for j in range(10):
 			if test_data.data[1][i][j] == 1:
 				index = j
 				break
-		if x == index:
+		if pred == index:
 			correct += 1
+
 		count +=1
 	print('done testing')
 	
 	print('---------')
 	print('correct:', correct)
 	print('total tested:', count)
-	print('correction rate:', correct/count)
+	print('accuracy:', '{0:.3f}%'.format(correct/count*100))
