@@ -17,20 +17,20 @@ import numpy as np
 from PIL import Image
 
 def toOneHot(arr):
-    res = []
-    for i in range(0, len(arr)):
-        one_hot = np.zeros(10)
-        one_hot[arr[i]] = 1
-        res.append(one_hot)
-    return np.asarray(res)
+	res = []
+	for i in range(0, len(arr)):
+		one_hot = np.zeros(10)
+		one_hot[arr[i]] = 1
+		res.append(one_hot)
+	return np.asarray(res)
 
 # load data
 # offset = 8 for lables
 # offset = 16 for images 
 def read_data(path, offset_no):
-    with gzip.open(path, 'rb') as file:
-        data = np.frombuffer(file.read(), dtype=np.uint8, offset=offset_no)
-    return data
+	with gzip.open(path, 'rb') as file:
+		data = np.frombuffer(file.read(), dtype=np.uint8, offset=offset_no)
+	return data
 
 train_labels = read_data('data/train-labels-idx1-ubyte.gz', 8)
 train_images = read_data('data/train-images-idx3-ubyte.gz', 16).reshape(len(train_labels), 784)
@@ -40,10 +40,10 @@ test_images = read_data('data/t10k-images-idx3-ubyte.gz', 16).reshape(len(test_l
 
 # Convert array to images 
 def arr_to_img(arr):
-    mat = np.reshape(arr, (28, 28))
-    img = Image.fromarray(np.uint8(mat) , 'L')
-    img.show()
-    
+	mat = np.reshape(arr, (28, 28))
+	img = Image.fromarray(np.uint8(mat) , 'L')
+	img.show()
+	
 test_images = np.array(test_images)/255
 train_images = np.array(train_images)/255
 
@@ -64,21 +64,21 @@ test_data.append(test_labels)
 
 # Convert the spike dictionary from spike_trains() to arrays of 0 and 1
 def dictToSpikeTrains(spike_dict):
-    # How many time steps in one second
-    time_steps = 1000
-    all_trains = []
-    for i in range(len(spike_dict)):
-        spikes = spike_dict.get(i)
-        spikes = [int(x/second*time_steps) for x in spikes]
-        #print(spikes)
-        train = numpy.zeros(100)
-        
-        for j in range(len(spikes)):
-            # index=second-1
-            train[spikes[j]-1]=1
-        all_trains.append(train)
-        
-    return all_trains
+	# How many time steps in one second
+	time_steps = 1000
+	all_trains = []
+	for i in range(len(spike_dict)):
+		spikes = spike_dict.get(i)
+		spikes = [int(x/second*time_steps) for x in spikes]
+		#print(spikes)
+		train = numpy.zeros(100)
+		
+		for j in range(len(spikes)):
+			# index=second-1
+			train[spikes[j]-1]=1
+		all_trains.append(train)
+		
+	return all_trains
 
 
 # In[3]:
@@ -117,14 +117,14 @@ def updateSTDP(spike_train_i, spike_train_j, weight):
 
 # generate a current value with respect to its gray scale value
 def grayValToCurr(gray_val):
-    return (gray_val + 0.01)*10
+	return (gray_val + 0.01)*10
 
 # Convert a 1-D array image to its corresponding current input
 def imageToCurr(img):
-    curr = []
-    for i in range(len(img)):
-        curr.append(grayValToCurr(img[i])*nA)
-    return curr
+	curr = []
+	for i in range(len(img)):
+		curr.append(grayValToCurr(img[i])*nA)
+	return curr
 
 
 # In[5]:
@@ -159,22 +159,22 @@ VT = -63*mV
 eqs = Equations('''
 dv/dt = (gl*(El-v) - g_na*(m*m*m)*h*(v-ENa) - g_kd*(n*n*n*n)*(v-EK) + I)/Cm : volt
 dm/dt = 0.32*(mV**-1)*(13.*mV-v+VT)/
-    (exp((13.*mV-v+VT)/(4.*mV))-1.)/ms*(1-m)-0.28*(mV**-1)*(v-VT-40.*mV)/
-    (exp((v-VT-40.*mV)/(5.*mV))-1.)/ms*m : 1
+	(exp((13.*mV-v+VT)/(4.*mV))-1.)/ms*(1-m)-0.28*(mV**-1)*(v-VT-40.*mV)/
+	(exp((v-VT-40.*mV)/(5.*mV))-1.)/ms*m : 1
 dn/dt = 0.032*(mV**-1)*(15.*mV-v+VT)/
-    (exp((15.*mV-v+VT)/(5.*mV))-1.)/ms*(1.-n)-.5*exp((10.*mV-v+VT)/(40.*mV))/ms*n : 1
+	(exp((15.*mV-v+VT)/(5.*mV))-1.)/ms*(1.-n)-.5*exp((10.*mV-v+VT)/(40.*mV))/ms*n : 1
 dh/dt = 0.128*exp((17.*mV-v+VT)/(18.*mV))/ms*(1.-h)-4./(1+exp((40.*mV-v+VT)/(5.*mV)))/ms*h : 1
 I : amp
 ''')
 # Threshold and refractoriness are only used for spike counting
 input_layer = NeuronGroup(num_input_neurons, eqs,
-                    threshold='v > -40*mV',
-                    refractory='v > -40*mV',
-                    method='exponential_euler')
+					threshold='v > -40*mV',
+					refractory='v > -40*mV',
+					method='exponential_euler')
 output_layer = NeuronGroup(num_output_neurons, eqs,
-                    threshold='v > -40*mV',
-                    refractory='v > -40*mV',
-                    method='exponential_euler')
+					threshold='v > -40*mV',
+					refractory='v > -40*mV',
+					method='exponential_euler')
 
 # monitor is used to keep track of the voltage, not needed for this
 monitor = StateMonitor(input_layer,'v', record=range(num_input_neurons))
@@ -190,12 +190,12 @@ store()
 
 # Cut down the number of categories
 def filterData(label, clothes_index):
-    sum=0
-    for i in range(len(clothes_index)):
-        sum += label[clothes_index[i]]
-    if sum == 1:
-        return True
-    return False
+	sum=0
+	for i in range(len(clothes_index)):
+		sum += label[clothes_index[i]]
+	if sum == 1:
+		return True
+	return False
 
 
 # In[11]:
@@ -203,59 +203,68 @@ def filterData(label, clothes_index):
 
 # Generate currents for teaching neurons
 def getTeachCurr(label):
-    if label[0] == 1:
-        return [8,0,0,0] * nA
-    if label[2] == 1:
-        return [0,8,0,0] * nA
-    if label[7] == 1:
-        return [0,0,8,0] * nA
-    if label[8] == 1:
-        return [0,0,0,8] * nA
-    print('wrong label')
-    return [0,0,0,0] * nA
+	if label[0] == 1:
+		return [8,0,0,0] * nA
+	if label[2] == 1:
+		return [0,8,0,0] * nA
+	if label[7] == 1:
+		return [0,0,8,0] * nA
+	if label[8] == 1:
+		return [0,0,0,8] * nA
+	print('wrong label')
+	return [0,0,0,0] * nA
 
 
 # In[12]:
-
+# print('train_data:', train_data)
+print('input_layer:', input_layer)
 print('start training')
 weight=numpy.zeros((4,784))
 #1: Trousers 2: Pullover 7: Sneaker 8: Bag
 for epoch in range(1000):
-    if epoch%10==0:
-        print(str(epoch) + '/1000')
-        
-    # Ignore the data that are not 1,2,7 or 8
-    if filterData(train_data[1][epoch], [0,2,7,8])==False:
-        continue
-        
-    # Restore to the previous checkpoint (reset the time of monitors)
-    restore()
-    
-    input_layer.v = El
-    
-    # Feed the input layer with image current, output layer with teaching currents 
-    input_layer.I = imageToCurr(train_data[0][epoch])
-    output_layer.I = getTeachCurr(train_data[1][epoch])
-    
-    run(duration)    
-    
-    # spike_trains() is a dictionary that has neuron index as key and its 
-    # corresponding time of spikes as value
-    spike_dict = spikeMons.spike_trains()
-    output_spike_dict = output_spikeMons.spike_trains()
-    
-    #plot(monitor.t/ms, monitor.v[0])
+	if epoch%10==0:
+		print(str(epoch) + '/1000')
+		
+	# Ignore the data that are not 1,2,7 or 8
+	if filterData(train_data[1][epoch], [0,2,7,8])==False:
+		continue
+		
+	# Restore to the previous checkpoint (reset the time of monitors)
+	restore()
+	
+	input_layer.v = El
+	
+	# Feed the input layer with image current, output layer with teaching currents 
+	input_layer.I = imageToCurr(train_data[0][epoch])
+	# print('self.train_data.data[0][epoch]', train_data[0][epoch])
+	# print('self.input_layer.I:', input_layer.I)
+	output_layer.I = getTeachCurr(train_data[1][epoch])
+	# print('self.output_layer.I:', output_layer.I)
+	
+	run(duration)	
+	
+	# spike_trains() is a dictionary that has neuron index as key and its 
+	# corresponding time of spikes as value
+	spike_dict = spikeMons.spike_trains()
+	output_spike_dict = output_spikeMons.spike_trains()
+	print('spike_dict:', spike_dict)
+	print('output_spike_dict:', output_spike_dict)
+	
+	#plot(monitor.t/ms, monitor.v[0])
 
-    # convert the dictionaries to arrays of 0 and 1
-    in_trains = dictToSpikeTrains(spike_dict)
-    out_trains = dictToSpikeTrains(output_spike_dict)
-    
-    # update the weights with STDP
-    for k in range(num_output_neurons):
-        for i in range(len(weight[k])):
-            weight[k][i] = updateSTDP(out_trains[k], in_trains[i], weight[k][i])
-            
+	# convert the dictionaries to arrays of 0 and 1
+	in_trains = dictToSpikeTrains(spike_dict)
+	out_trains = dictToSpikeTrains(output_spike_dict)
+	# print('in_trains:', in_trains)
+	# print('out_trains:', out_trains)
+	
+	# update the weights with STDP
+	for k in range(num_output_neurons):
+		for i in range(len(weight[k])):
+			weight[k][i] = updateSTDP(out_trains[k], in_trains[i], weight[k][i])
+			
 print('done training')
+
 
 
 # In[13]:
@@ -263,35 +272,35 @@ print('done training')
 
 count, correct = 0,0
 for i in range(1000):
-    if i%50==0:
-        print(i)
-    if filterData(test_data[1][i], [0,2,7,8])==False:
-        continue
-    cur = imageToCurr(test_data[0][i])
+	if i%50==0:
+		print(i)
+	if filterData(test_data[1][i], [0,2,7,8])==False:
+		continue
+	cur = imageToCurr(test_data[0][i])
 
-    sum=[0,0,0,0]
-    x = -1
-    for k in range(784):
-        sum[0]+=weight[0][k]*cur[k]
-        sum[1]+=weight[1][k]*cur[k]
-        sum[2]+=weight[2][k]*cur[k]
-        sum[3]+=weight[3][k]*cur[k]
-    if sum[0]==max(sum):
-        x = 0
-    elif sum[1]==max(sum):
-        x = 2
-    elif sum[2]==max(sum):
-        x = 7
-    else:
-        x = 8
-    index = -1
-    for j in range(10):
-        if test_data[1][i][j] == 1:
-            index = j
-            break
-    if x == index:
-        correct += 1
-    count +=1
+	sum=[0,0,0,0]
+	x = -1
+	for k in range(784):
+		sum[0]+=weight[0][k]*cur[k]
+		sum[1]+=weight[1][k]*cur[k]
+		sum[2]+=weight[2][k]*cur[k]
+		sum[3]+=weight[3][k]*cur[k]
+	if sum[0]==max(sum):
+		x = 0
+	elif sum[1]==max(sum):
+		x = 2
+	elif sum[2]==max(sum):
+		x = 7
+	else:
+		x = 8
+	index = -1
+	for j in range(10):
+		if test_data[1][i][j] == 1:
+			index = j
+			break
+	if x == index:
+		correct += 1
+	count +=1
 
 print('---------')
 print(correct)
